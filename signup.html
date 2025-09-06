@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Signup Page</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        }
+        .container {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            width: 90%;
+            max-width: 400px;
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 1.5rem;
+        }
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #34495e;
+            font-weight: 600;
+        }
+        input {
+            width: 100%;
+            padding: 0.8rem;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border 0.3s ease;
+            box-sizing: border-box;
+        }
+        input:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+        }
+        .btn {
+            width: 100%;
+            padding: 0.8rem;
+            background: #2ecc71;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .btn:hover {
+            background: #27ae60;
+            transform: translateY(-2px);
+        }
+        .btn-secondary {
+            margin-top: 1rem;
+            background: #7f8c8d;
+        }
+        .btn-secondary:hover {
+            background: #95a5a6;
+        }
+        .error-message {
+            color: #e74c3c;
+            font-size: 0.9rem;
+            margin-top: 0.5rem;
+            display: none;
+        }
+        .password-strength {
+            height: 4px;
+            background: #eee;
+            margin-top: 0.5rem;
+            border-radius: 2px;
+            overflow: hidden;
+        }
+        .password-strength-fill {
+            height: 100%;
+            width: 0%;
+            background: #e74c3c;
+            transition: all 0.3s ease;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Create Account</h1>
+        <form id="signupForm">
+            <div class="form-group">
+                <label for="name">Full Name</label>
+                <input type="text" id="name" name="name" placeholder="Enter your full name" required>
+                <div id="nameError" class="error-message">Please enter your name</div>
+            </div>
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input type="email" id="email" name="email" placeholder="Enter your email" required>
+                <div id="emailError" class="error-message">Please enter a valid email</div>
+            </div>
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" placeholder="Create a password (min 6 characters)" required minlength="6">
+                <div class="password-strength">
+                    <div class="password-strength-fill" id="passwordStrength"></div>
+                </div>
+                <div id="passwordError" class="error-message">Password must be at least 6 characters</div>
+            </div>
+            <button type="submit" class="btn">Sign Up</button>
+        </form>
+        <button onclick="goToHome()" class="btn btn-secondary">Go to Home</button>
+    </div>
+
+    <script>
+        function goToHome() {
+            window.location.href = "index";
+        }
+
+        // Password strength indicator
+        document.getElementById("password").addEventListener("input", function(e) {
+            const password = e.target.value;
+            const strengthBar = document.getElementById("passwordStrength");
+            let strength = 0;
+            
+            if (password.length > 0) strength += 20;
+            if (password.length >= 6) strength += 30;
+            if (password.match(/[A-Z]/)) strength += 20;
+            if (password.match(/[0-9]/)) strength += 20;
+            if (password.match(/[^A-Za-z0-9]/)) strength += 10;
+            
+            strengthBar.style.width = strength + "%";
+            
+            if (strength < 40) {
+                strengthBar.style.backgroundColor = "#e74c3c";
+            } else if (strength < 70) {
+                strengthBar.style.backgroundColor = "#f39c12";
+            } else {
+                strengthBar.style.backgroundColor = "#2ecc71";
+            }
+        });
+
+        document.getElementById("signupForm").addEventListener("submit", async function(event) {
+            event.preventDefault();
+            
+            // Reset error messages
+            document.querySelectorAll('.error-message').forEach(el => el.style.display = 'none');
+            
+            const name = document.getElementById("name").value;
+            const email = document.getElementById("email").value;
+            const password = document.getElementById("password").value;
+
+            // Client-side validation
+            let isValid = true;
+            
+            if (!name) {
+                document.getElementById("nameError").style.display = 'block';
+                isValid = false;
+            }
+            
+            if (!email) {
+                document.getElementById("emailError").style.display = 'block';
+                isValid = false;
+            }
+            
+            if (!password || password.length < 6) {
+                document.getElementById("passwordError").style.display = 'block';
+                isValid = false;
+            }
+            
+            if (!isValid) return;
+
+            try {
+                const response = await fetch("/signup", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({ name, email, password })
+                });
+
+                const result = await response.json();
+                
+                if (response.ok) {
+                    alert("Account created successfully!");
+                    window.location.href = "/login";
+                } else {
+                    alert(result.error || "Signup failed. Please try again.");
+                }
+            } catch (error) {
+                alert("An error occurred. Please try again.");
+                console.error("Signup error:", error);
+            }
+        });
+    </script>
+</body>
+</html>
